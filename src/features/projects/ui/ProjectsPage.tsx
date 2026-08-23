@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type JSX } from 'react';
-import { NavigationType, useNavigationType, useSearchParams } from 'react-router-dom';
+import { NavigationType, useLocation, useNavigationType, useSearchParams } from 'react-router-dom';
 
 import {
   parseProjectStatusFilter,
@@ -9,8 +9,10 @@ import {
 import { ProjectsEmptyActionState } from './ProjectsEmptyActionState';
 import { ProjectsEmptyState } from './ProjectsEmptyState';
 import { ProjectsErrorState } from './ProjectsErrorState';
+import { ProjectRouteHeading } from './ProjectRouteHeading';
 import { ProjectsTable } from './ProjectsTable';
 import { ProjectsTableSkeleton } from './ProjectsTableSkeleton';
+import { shouldFocusProjectsHeading } from './projectNavigation';
 
 type ProjectsPageProps = Pick<UseProjectsOptions, 'repository'>;
 
@@ -21,6 +23,7 @@ interface ResultAnnouncement {
 
 // Route component = controller/transport layer: calls a service, shapes the view.
 export function ProjectsPage({ repository }: ProjectsPageProps = {}): JSX.Element {
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigationType = useNavigationType();
   const urlSearchText = searchParams.get('q') ?? '';
@@ -112,7 +115,12 @@ export function ProjectsPage({ repository }: ProjectsPageProps = {}): JSX.Elemen
 
   return (
     <main className="mx-auto max-w-4xl p-8">
-      <h1 className="text-2xl font-bold">Projects</h1>
+      <ProjectRouteHeading
+        focusOnMount={shouldFocusProjectsHeading(location.state)}
+        className="text-2xl font-bold"
+      >
+        Projects
+      </ProjectRouteHeading>
       <div className="mt-6 max-w-md">
         <label htmlFor="project-search" className="block font-semibold">
           Search projects

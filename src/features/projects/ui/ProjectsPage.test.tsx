@@ -14,7 +14,14 @@ import { server } from '@/test/msw/server';
 import { type Project } from '../services/useProjects';
 import { ProjectsPage } from './ProjectsPage';
 
-function makeWrapper(initialEntry = '/projects'): (props: { children: ReactNode }) => JSX.Element {
+interface InitialRoute {
+  pathname: string;
+  state: unknown;
+}
+
+function makeWrapper(
+  initialEntry: string | InitialRoute = '/projects',
+): (props: { children: ReactNode }) => JSX.Element {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return function Wrapper({ children }: { children: ReactNode }): JSX.Element {
     return (
@@ -30,6 +37,27 @@ afterEach(() => {
 });
 
 describe('ProjectsPage', () => {
+  it('moves focus to the route heading after a Project detail return', () => {
+    const repository = { listProjects: () => Promise.resolve(defaultProjects) };
+
+    render(<ProjectsPage repository={repository} />, {
+      wrapper: makeWrapper({
+        pathname: '/projects',
+        state: { focusProjectsHeading: true },
+      }),
+    });
+
+    expect(screen.getByRole('heading', { name: 'Projects' })).toHaveFocus();
+  });
+
+  it('does not move focus when the Projects route opens directly', () => {
+    const repository = { listProjects: () => Promise.resolve(defaultProjects) };
+
+    render(<ProjectsPage repository={repository} />, { wrapper: makeWrapper() });
+
+    expect(screen.getByRole('heading', { name: 'Projects' })).not.toHaveFocus();
+  });
+
   it('shows the loading state', () => {
     let resolveLoading: ((projects: Project[]) => void) | undefined;
     const repository = {

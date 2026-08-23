@@ -26,6 +26,44 @@ afterEach(() => {
 });
 
 describe('HttpProjectsRepository', () => {
+  it('parses a valid detail envelope and returns the unwrapped Project', async () => {
+    const repository = new HttpProjectsRepository();
+
+    const project = await repository.getProject(defaultProjects[0]!.id);
+
+    expect(project).toEqual(defaultProjects[0]);
+  });
+
+  it('raises ValidationError with the ZodError as its cause for malformed Project data', async () => {
+    server.use(
+      http.get(`${API_URL}/bad-1`, () =>
+        HttpResponse.json({
+          project: {
+            ...defaultProjects[0],
+            status: 'deleted',
+          },
+        }),
+      ),
+    );
+    const repository = new HttpProjectsRepository();
+
+    let caughtError: unknown;
+    try {
+      await repository.getProject('bad-1');
+    } catch (error) {
+      caughtError = error;
+    }
+
+    expect(caughtError).toBeInstanceOf(ValidationError);
+    expect((caughtError as Error).cause).toBeInstanceOf(ZodError);
+  });
+
+  it('preserves the 404 status for an unknown Project', async () => {
+    const repository = new HttpProjectsRepository();
+
+    await expect(repository.getProject('missing')).rejects.toMatchObject({ status: 404 });
+  });
+
   it('parses a valid envelope and returns the unwrapped Project array', async () => {
     const repository = new HttpProjectsRepository();
 
@@ -88,6 +126,30 @@ describe('HttpProjectsRepository', () => {
 });
 
 describe('FakeProjectsRepository', () => {
+  it('resolves a Project from its constructor array', async () => {
+    const repository = new FakeProjectsRepository(defaultProjects);
+
+    await expect(repository.getProject(defaultProjects[1]!.id)).resolves.toEqual(
+      defaultProjects[1],
+    );
+  });
+
+  it('rejects with a 404 HttpError when a Project is absent', async () => {
+    const repository = new FakeProjectsRepository(defaultProjects);
+
+    await expect(repository.getProject('missing')).rejects.toMatchObject({ status: 404 });
+  });
+
+  it('rejects when the caller has already aborted the request', async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const repository = new FakeProjectsRepository(defaultProjects);
+
+    await expect(repository.getProject(defaultProjects[0]!.id, controller.signal)).rejects.toThrow(
+      'aborted',
+    );
+  });
+
   it('resolves the constructor array with no network', async () => {
     const repository = new FakeProjectsRepository(defaultProjects);
 

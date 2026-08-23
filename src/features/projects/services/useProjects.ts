@@ -1,6 +1,6 @@
 // Service layer (feature-internal): business logic + data hooks composing
 // the feature's own repositories. UI → services → repositories → core.
-import { useDeferredValue, useEffect, useRef } from 'react';
+import { useDeferredValue } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { z } from 'zod';
 
@@ -8,6 +8,7 @@ import { ValidationError } from '@/core/errors';
 
 import { HttpProjectsRepository, type ProjectsRepository } from '../repositories/projects';
 import { type Project, projectStatusSchema } from '../repositories/schemas/project';
+import { useRetainedQueryError } from './useRetainedQueryError';
 
 export type { Project } from '../repositories/schemas/project';
 
@@ -18,7 +19,7 @@ export type ProjectsErrorKind = 'transport' | 'schema';
 export type ProjectStatusFilter = z.infer<typeof projectStatusFilterSchema>;
 
 export interface UseProjectsOptions {
-  repository?: ProjectsRepository | undefined;
+  repository?: Pick<ProjectsRepository, 'listProjects'> | undefined;
   searchText?: string | undefined;
   statusFilter?: ProjectStatusFilter | undefined;
 }
@@ -70,25 +71,13 @@ export function useProjects(options: UseProjectsOptions = {}): UseProjectsResult
     }),
   });
 
-  // TanStack Query clears `error` while a refetch is in flight. Remember the last
-  // error so the error state (and its busy retry button) stays on screen until
-  // the refetch either succeeds or fails with a new error.
-  const lastErrorKind = useRef<ProjectsErrorKind | null>(null);
-  useEffect(() => {
-    if (error) {
-      lastErrorKind.current = toErrorKind(error);
-    }
-  }, [error]);
-  useEffect(() => {
-    if (data !== undefined) {
-      lastErrorKind.current = null;
-    }
-  }, [data]);
-
-  const currentErrorKind = error ? toErrorKind(error) : null;
-  const retryingAfterError = isFetching && lastErrorKind.current !== null;
-  const errorKind = currentErrorKind ?? (retryingAfterError ? lastErrorKind.current : null);
-  const isRefetching = (isFetching && !isPending) || retryingAfterError;
+  const { errorKind, isRetryingAfterError } = useRetainedQueryError({
+    error,
+    hasData: data !== undefined,
+    isFetching,
+    classifyError: toErrorKind,
+  });
+  const isRefetching = (isFetching && !isPending) || isRetryingAfterError;
 
   return {
     projects: data?.projects ?? [],
