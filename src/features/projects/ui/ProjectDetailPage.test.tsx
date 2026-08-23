@@ -31,14 +31,16 @@ afterEach(() => {
 });
 
 describe('ProjectDetailPage', () => {
-  it('moves focus to the route heading', () => {
+  it('makes the return control the first keyboard stop', async () => {
     const repository = {
       getProject: () => new Promise<Project>(() => undefined),
     };
 
     render(<ProjectDetailPage repository={repository} />, { wrapper: makeWrapper() });
 
-    expect(screen.getByRole('heading', { name: 'Project' })).toHaveFocus();
+    await userEvent.tab();
+
+    expect(screen.getByRole('link', { name: 'Back to projects' })).toHaveFocus();
   });
 
   it('keeps a hidden shimmer layout and a return control visible while loading', () => {

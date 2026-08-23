@@ -1,5 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen } from '@testing-library/react';
 import type { JSX } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
@@ -15,38 +14,22 @@ function BrokenProjectDetail(): JSX.Element {
 }
 
 describe('ProjectDetailErrorBoundary', () => {
-  it('shows safe fixed copy and repeats the route load when requested', async () => {
-    let resolveRetry: (() => void) | undefined;
-    const onRetry = vi.fn(
-      () =>
-        new Promise<void>((resolve) => {
-          resolveRetry = resolve;
-        }),
-    );
+  it('shows safe route failure copy without describing it as a request failure', () => {
     const { container } = render(
       <MemoryRouter>
-        <ProjectDetailErrorBoundary onRetry={onRetry}>
+        <ProjectDetailErrorBoundary>
           <BrokenProjectDetail />
         </ProjectDetailErrorBoundary>
       </MemoryRouter>,
       { onCaughtError: () => undefined },
     );
 
-    expect(screen.getByText('We could not load this project.')).toBeInTheDocument();
+    expect(screen.getByText('We could not show this project screen.')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Back to projects' })).toHaveAttribute(
       'href',
       '/projects',
     );
     expect(container).not.toHaveTextContent('/projects/project-1');
-
-    const retryButton = screen.getByRole('button', { name: 'Retry' });
-    await userEvent.click(retryButton);
-    expect(onRetry).toHaveBeenCalledOnce();
-    expect(retryButton).toHaveAttribute('aria-busy', 'true');
-
-    resolveRetry?.();
-    await waitFor(() => {
-      expect(retryButton).toHaveAttribute('aria-busy', 'false');
-    });
+    expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
   });
 });

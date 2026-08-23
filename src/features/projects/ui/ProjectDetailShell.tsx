@@ -24,9 +24,7 @@ export function ProjectDetailShell({
       >
         Back to projects
       </Link>
-      <ProjectRouteHeading focusOnMount className={headingClassName}>
-        {title}
-      </ProjectRouteHeading>
+      <ProjectRouteHeading className={headingClassName}>{title}</ProjectRouteHeading>
       {children}
     </main>
   );
