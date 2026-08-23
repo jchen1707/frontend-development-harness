@@ -1,7 +1,12 @@
 import { useEffect, useRef, useState, type JSX } from 'react';
 import { NavigationType, useNavigationType, useSearchParams } from 'react-router-dom';
 
-import { useProjects, type UseProjectsOptions } from '../services/useProjects';
+import {
+  parseProjectStatusFilter,
+  useProjects,
+  type UseProjectsOptions,
+} from '../services/useProjects';
+import { ProjectsEmptyActionState } from './ProjectsEmptyActionState';
 import { ProjectsEmptyState } from './ProjectsEmptyState';
 import { ProjectsErrorState } from './ProjectsErrorState';
 import { ProjectsTable } from './ProjectsTable';
@@ -9,18 +14,36 @@ import { ProjectsTableSkeleton } from './ProjectsTableSkeleton';
 
 type ProjectsPageProps = Pick<UseProjectsOptions, 'repository'>;
 
+interface ResultAnnouncement {
+  id: number;
+  message: string;
+}
+
 // Route component = controller/transport layer: calls a service, shapes the view.
 export function ProjectsPage({ repository }: ProjectsPageProps = {}): JSX.Element {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigationType = useNavigationType();
   const urlSearchText = searchParams.get('q') ?? '';
+  const statusFilter = parseProjectStatusFilter(searchParams.get('status'));
   const [searchText, setSearchText] = useState(urlSearchText);
   const hasSearchHistoryEntry = useRef(urlSearchText.length > 0);
-  const { projects, isPending, isRefetching, isSearchPending, errorKind, refetch } = useProjects({
+  const {
+    projects,
+    hasOnlyArchivedProjects,
+    isPending,
+    isRefetching,
+    isSearchPending,
+    errorKind,
+    refetch,
+  } = useProjects({
     repository,
     searchText,
+    statusFilter,
   });
-  const [resultAnnouncement, setResultAnnouncement] = useState('');
+  const [resultAnnouncement, setResultAnnouncement] = useState<ResultAnnouncement>({
+    id: 0,
+    message: '',
+  });
 
   useEffect(() => {
     if (navigationType === NavigationType.Pop) {
@@ -36,13 +59,16 @@ export function ProjectsPage({ repository }: ProjectsPageProps = {}): JSX.Elemen
 
     const announcementTimer = window.setTimeout(() => {
       const projectWord = projects.length === 1 ? 'project' : 'projects';
-      setResultAnnouncement(`${String(projects.length)} ${projectWord} found.`);
+      setResultAnnouncement((currentAnnouncement) => ({
+        id: currentAnnouncement.id + 1,
+        message: `${String(projects.length)} ${projectWord} found.`,
+      }));
     }, 500);
 
     return () => {
       window.clearTimeout(announcementTimer);
     };
-  }, [errorKind, isPending, isSearchPending, projects.length, searchText]);
+  }, [errorKind, isPending, isSearchPending, projects.length, searchText, statusFilter]);
 
   function updateSearchText(value: string): void {
     setSearchText(value);
@@ -62,6 +88,32 @@ export function ProjectsPage({ repository }: ProjectsPageProps = {}): JSX.Elemen
     );
   }
 
+  function updateStatusFilter(value: string): void {
+    const nextStatusFilter = parseProjectStatusFilter(value);
+    setSearchParams((currentSearchParams) => {
+      const nextSearchParams = new URLSearchParams(currentSearchParams);
+      if (nextStatusFilter) {
+        nextSearchParams.set('status', nextStatusFilter);
+      } else {
+        nextSearchParams.delete('status');
+      }
+      return nextSearchParams;
+    });
+  }
+
+  function clearFilters(): void {
+    setSearchText('');
+    hasSearchHistoryEntry.current = false;
+    setSearchParams((currentSearchParams) => {
+      const nextSearchParams = new URLSearchParams(currentSearchParams);
+      nextSearchParams.delete('q');
+      nextSearchParams.delete('status');
+      return nextSearchParams;
+    });
+  }
+
+  const showOnlyArchivedState = hasOnlyArchivedProjects && !statusFilter;
+
   return (
     <main className="mx-auto max-w-4xl p-8">
       <h1 className="text-2xl font-bold">Projects</h1>
@@ -79,8 +131,31 @@ export function ProjectsPage({ repository }: ProjectsPageProps = {}): JSX.Elemen
           className="mt-2 w-full rounded border border-slate-300 px-3 py-2 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-200"
         />
       </div>
+      <div className="mt-4 max-w-md">
+        <label htmlFor="project-status" className="block font-semibold">
+          Status
+        </label>
+        <select
+          id="project-status"
+          value={statusFilter ?? ''}
+          onChange={(event) => {
+            updateStatusFilter(event.target.value);
+          }}
+          className="mt-2 w-full rounded border border-slate-300 bg-white px-3 py-2 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-200"
+        >
+          <option value="">Active and paused</option>
+          <option value="all">All statuses</option>
+          <option value="active">Active</option>
+          <option value="paused">Paused</option>
+          <option value="archived">Archived</option>
+        </select>
+      </div>
       <div className="sr-only" role="status" aria-live="polite">
-        {isPending && !errorKind ? 'Loading projects' : resultAnnouncement}
+        {isPending && !errorKind ? (
+          'Loading projects'
+        ) : (
+          <span key={resultAnnouncement.id}>{resultAnnouncement.message}</span>
+        )}
       </div>
       <section className="mt-6">
         {isPending && !errorKind && <ProjectsTableSkeleton />}
@@ -93,21 +168,32 @@ export function ProjectsPage({ repository }: ProjectsPageProps = {}): JSX.Elemen
             isRefetching={isRefetching}
           />
         )}
-        {!errorKind && projects.length === 0 && !searchText && <ProjectsEmptyState />}
-        {!errorKind && projects.length === 0 && searchText && (
-          <div>
-            <p className="text-slate-600">No projects match your search.</p>
-            <button
-              type="button"
-              onClick={() => {
-                updateSearchText('');
-              }}
-              className="mt-3 rounded bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-offset-2"
-            >
-              Clear search
-            </button>
-          </div>
+        {!errorKind && projects.length === 0 && showOnlyArchivedState && (
+          <ProjectsEmptyActionState
+            message="All your projects are archived."
+            actionLabel="Include archived projects"
+            onAction={() => {
+              updateStatusFilter('all');
+            }}
+          />
         )}
+        {!errorKind &&
+          projects.length === 0 &&
+          !showOnlyArchivedState &&
+          !searchText &&
+          !statusFilter && <ProjectsEmptyState />}
+        {!errorKind &&
+          projects.length === 0 &&
+          !showOnlyArchivedState &&
+          (searchText || statusFilter) && (
+            <ProjectsEmptyActionState
+              message={
+                statusFilter ? 'No projects match your filters.' : 'No projects match your search.'
+              }
+              actionLabel="Clear filters"
+              onAction={clearFilters}
+            />
+          )}
         {!errorKind && projects.length > 0 && <ProjectsTable projects={projects} />}
       </section>
     </main>
