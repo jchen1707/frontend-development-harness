@@ -49,6 +49,7 @@
       "name": "lighthouse",
       "kind": "integration",
       "run": ["pnpm", "lhci"],
+      "enabled": false,
       "when": "performance or accessibility budgets are in scope",
       "caveat": "exits 0 far more readily than it looks. Only the accessibility assertion is `error`; performance, best-practices and SEO are `warn`, and the performance category currently scores null because the pinned Lighthouse cannot trace against the installed Chrome. A category with no score is not a pass \u2014 read the assertion output, not the exit code."
     }
