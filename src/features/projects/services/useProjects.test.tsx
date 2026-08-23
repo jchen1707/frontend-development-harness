@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react';
 import type { JSX, ReactNode } from 'react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { HttpError, ValidationError } from '@/core/errors';
 
@@ -44,6 +44,53 @@ describe('useProjects', () => {
     });
 
     expect(result.current.projects.map((project) => project.id)).toEqual(['active-1', 'paused-1']);
+  });
+
+  it('filters Projects by archived Status without requesting them again', async () => {
+    const listProjects = vi
+      .fn()
+      .mockResolvedValue([
+        makeProject({ id: 'active-1', status: 'active' }),
+        makeProject({ id: 'archived-1', status: 'archived' }),
+      ]);
+    const { result } = renderHook(
+      () => useProjects({ repository: { listProjects }, statusFilter: 'archived' }),
+      { wrapper: makeWrapper() },
+    );
+
+    await waitFor(() => {
+      expect(result.current.projects.map((project) => project.id)).toEqual(['archived-1']);
+    });
+    expect(listProjects).toHaveBeenCalledTimes(1);
+  });
+
+  it('includes every Status when the Status filter is all', async () => {
+    const repository = new FakeProjectsRepository([
+      makeProject({ id: 'active-1', status: 'active' }),
+      makeProject({ id: 'archived-1', status: 'archived' }),
+    ]);
+    const { result } = renderHook(() => useProjects({ repository, statusFilter: 'all' }), {
+      wrapper: makeWrapper(),
+    });
+
+    await waitFor(() => {
+      expect(result.current.projects.map((project) => project.id)).toEqual([
+        'active-1',
+        'archived-1',
+      ]);
+    });
+  });
+
+  it('reports when every Project is archived', async () => {
+    const repository = new FakeProjectsRepository([
+      makeProject({ id: 'archived-1', status: 'archived' }),
+    ]);
+    const { result } = renderHook(() => useProjects({ repository }), { wrapper: makeWrapper() });
+
+    await waitFor(() => {
+      expect(result.current.hasOnlyArchivedProjects).toBe(true);
+    });
+    expect(result.current.projects).toEqual([]);
   });
 
   it('maps a ValidationError to errorKind schema', async () => {
