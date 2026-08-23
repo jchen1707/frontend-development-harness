@@ -94,7 +94,7 @@ describe('useProjects', () => {
   });
 
   it('maps a ValidationError to errorKind schema', async () => {
-    const repository: ProjectsRepository = {
+    const repository: Pick<ProjectsRepository, 'listProjects'> = {
       listProjects: () => Promise.reject(new ValidationError('bad response')),
     };
     const { result } = renderHook(() => useProjects({ repository }), { wrapper: makeWrapper() });
@@ -105,7 +105,7 @@ describe('useProjects', () => {
   });
 
   it('maps an HttpError to errorKind transport', async () => {
-    const repository: ProjectsRepository = {
+    const repository: Pick<ProjectsRepository, 'listProjects'> = {
       listProjects: () => Promise.reject(new HttpError('Request failed: GET /projects', 500)),
     };
     const { result } = renderHook(() => useProjects({ repository }), { wrapper: makeWrapper() });

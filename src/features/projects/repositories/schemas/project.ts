@@ -22,6 +22,10 @@ export const projectListSchema = z.object({
   projects: z.array(projectSchema),
 });
 
+export const projectDetailSchema = z.object({
+  project: projectSchema,
+});
+
 export type ProjectStatus = z.infer<typeof projectStatusSchema>;
 export type ProjectOwner = z.infer<typeof projectOwnerSchema>;
 export type Project = z.infer<typeof projectSchema>;

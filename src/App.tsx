@@ -6,7 +6,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { apolloClient } from '@/core/apolloClient';
 import { queryClient } from '@/core/queryClient';
 import { Home } from '@/features/health';
-import { ProjectDetailStub, ProjectsPage } from '@/features/projects';
+import { ProjectDetailRoute, ProjectsPage } from '@/features/projects';
 
 // Root composition: wires cross-cutting providers + routing.
 export function App(): JSX.Element {
@@ -17,7 +17,7 @@ export function App(): JSX.Element {
           <Routes>
             <Route path="/" element={<Navigate to="/projects" replace />} />
             <Route path="/projects" element={<ProjectsPage />} />
-            <Route path="/projects/:id" element={<ProjectDetailStub />} />
+            <Route path="/projects/:id" element={<ProjectDetailRoute />} />
             <Route path="/health" element={<Home />} />
           </Routes>
         </BrowserRouter>
