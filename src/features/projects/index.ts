@@ -5,6 +5,7 @@ export { ProjectDetailStub } from './ui/ProjectDetailStub';
 export { ProjectsPage } from './ui/ProjectsPage';
 export {
   useProjects,
+  type ProjectStatusFilter,
   type ProjectsErrorKind,
   type UseProjectsOptions,
   type UseProjectsResult,

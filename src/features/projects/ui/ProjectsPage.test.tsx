@@ -70,6 +70,36 @@ describe('ProjectsPage', () => {
     expect(listProjects).toHaveBeenCalledTimes(1);
   });
 
+  it('filters Projects by Status without requesting them again', async () => {
+    const listProjects = vi.fn().mockResolvedValue(defaultProjects);
+    render(<ProjectsPage repository={{ listProjects }} />, { wrapper: makeWrapper() });
+
+    const statusControl = await screen.findByRole('combobox', { name: 'Status' });
+    await userEvent.selectOptions(statusControl, 'archived');
+
+    await waitFor(() => {
+      expect(screen.getByRole('link', { name: 'Project 3' })).toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: 'Project 1' })).not.toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(screen.getByRole('status')).toHaveTextContent('1 project found.');
+    });
+    expect(listProjects).toHaveBeenCalledTimes(1);
+  });
+
+  it('combines Status and search filters', async () => {
+    const repository = { listProjects: () => Promise.resolve(defaultProjects) };
+    render(<ProjectsPage repository={repository} />, {
+      wrapper: makeWrapper('/projects?q=2&status=active'),
+    });
+
+    expect(screen.getByRole('searchbox', { name: 'Search projects' })).toHaveValue('2');
+    expect(screen.getByRole('combobox', { name: 'Status' })).toHaveValue('active');
+    expect(await screen.findByText('No projects match your filters.')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Project 1' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Project 2' })).not.toBeInTheDocument();
+  });
+
   it('restores a URL search and offers a control that clears a no-match result', async () => {
     const repository = { listProjects: () => Promise.resolve(defaultProjects) };
     render(<ProjectsPage repository={repository} />, {
@@ -79,9 +109,28 @@ describe('ProjectsPage', () => {
     expect(screen.getByRole('searchbox', { name: 'Search projects' })).toHaveValue('missing');
     expect(await screen.findByText('No projects match your search.')).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Clear search' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
 
     await waitFor(() => {
+      expect(screen.getByRole('link', { name: 'Project 1' })).toBeInTheDocument();
+    });
+  });
+
+  it('restores both URL filters and clears them together', async () => {
+    const repository = { listProjects: () => Promise.resolve(defaultProjects) };
+    render(<ProjectsPage repository={repository} />, {
+      wrapper: makeWrapper('/projects?q=missing&status=archived'),
+    });
+
+    expect(screen.getByRole('searchbox', { name: 'Search projects' })).toHaveValue('missing');
+    expect(screen.getByRole('combobox', { name: 'Status' })).toHaveValue('archived');
+    expect(await screen.findByText('No projects match your filters.')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('searchbox', { name: 'Search projects' })).toHaveValue('');
+      expect(screen.getByRole('combobox', { name: 'Status' })).toHaveValue('');
       expect(screen.getByRole('link', { name: 'Project 1' })).toBeInTheDocument();
     });
   });
@@ -111,6 +160,30 @@ describe('ProjectsPage', () => {
     expect(announcements).toEqual(['0 projects found.']);
   });
 
+  it('announces a Status result when two Status choices have the same count', async () => {
+    const repository = { listProjects: () => Promise.resolve(defaultProjects) };
+    render(<ProjectsPage repository={repository} />, { wrapper: makeWrapper() });
+
+    const status = screen.getByRole('status');
+    const statusControl = screen.getByRole('combobox', { name: 'Status' });
+    await userEvent.selectOptions(statusControl, 'active');
+    await waitFor(() => {
+      expect(status).toHaveTextContent('1 project found.');
+    });
+
+    const announcements: string[] = [];
+    const observer = new MutationObserver(() => {
+      announcements.push(status.textContent);
+    });
+    observer.observe(status, { childList: true, characterData: true, subtree: true });
+
+    await userEvent.selectOptions(statusControl, 'paused');
+    await waitFor(() => {
+      expect(announcements).toEqual(['1 project found.']);
+    });
+    observer.disconnect();
+  });
+
   it('shows the empty state', async () => {
     const repository = { listProjects: () => Promise.resolve([]) };
     render(<ProjectsPage repository={repository} />, { wrapper: makeWrapper() });
@@ -119,6 +192,26 @@ describe('ProjectsPage', () => {
       expect(screen.getByText('You do not have any projects yet.')).toBeInTheDocument();
     });
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
+  });
+
+  it('explains when every Project is archived and offers to include them', async () => {
+    const archivedProject: Project = {
+      ...defaultProjects[0]!,
+      id: 'archived-1',
+      name: 'Archived Project',
+      status: 'archived',
+    };
+    const repository = { listProjects: () => Promise.resolve([archivedProject]) };
+    render(<ProjectsPage repository={repository} />, { wrapper: makeWrapper() });
+
+    expect(await screen.findByText('All your projects are archived.')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Include archived projects' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('link', { name: 'Archived Project' })).toBeInTheDocument();
+      expect(screen.getByRole('combobox', { name: 'Status' })).toHaveValue('all');
+    });
   });
 
   it('shows a transport error', async () => {
