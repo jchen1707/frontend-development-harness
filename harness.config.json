@@ -42,6 +42,14 @@
       "name": "playwright",
       "kind": "e2e",
       "run": ["pnpm", "test:e2e"],
+      "requires": [
+        "pnpm",
+        "exec",
+        "playwright",
+        "screenshot",
+        "about:blank",
+        "/tmp/playwright-probe.png"
+      ],
       "when": "the change alters user-visible behaviour, real navigation, focus across a page load, or anything depending on real layout",
       "caveat": "needs browsers installed: pnpm exec playwright install chromium."
     },
