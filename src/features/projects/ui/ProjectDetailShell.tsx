@@ -1,4 +1,4 @@
-import type { JSX, ReactNode } from 'react';
+import { useEffect, useRef, type JSX, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 
 import { ProjectRouteHeading } from './ProjectRouteHeading';
@@ -15,9 +15,16 @@ export function ProjectDetailShell({
   headingClassName,
   title,
 }: ProjectDetailShellProps): JSX.Element {
+  const returnLinkRef = useRef<HTMLAnchorElement>(null);
+
+  useEffect(() => {
+    returnLinkRef.current?.focus();
+  }, []);
+
   return (
     <main className="mx-auto max-w-4xl p-8">
       <Link
+        ref={returnLinkRef}
         to="/projects"
         state={RETURN_TO_PROJECTS_STATE}
         className="text-blue-600 hover:underline"

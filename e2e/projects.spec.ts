@@ -12,8 +12,6 @@ test('a user follows a Project row to its detail screen and returns to the list'
   await expect(page).toHaveURL('/projects/project-1');
   const projectHeading = page.getByRole('heading', { name: 'Project 1' });
   await expect(projectHeading).toBeVisible();
-
-  await page.keyboard.press('Tab');
   await expect(page.getByRole('link', { name: 'Back to projects' })).toBeFocused();
 
   await page.getByRole('link', { name: 'Back to projects' }).click();

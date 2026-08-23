@@ -31,14 +31,12 @@ afterEach(() => {
 });
 
 describe('ProjectDetailPage', () => {
-  it('makes the return control the first keyboard stop', async () => {
+  it('moves focus to the return control on route entry', () => {
     const repository = {
       getProject: () => new Promise<Project>(() => undefined),
     };
 
     render(<ProjectDetailPage repository={repository} />, { wrapper: makeWrapper() });
-
-    await userEvent.tab();
 
     expect(screen.getByRole('link', { name: 'Back to projects' })).toHaveFocus();
   });
