@@ -16,11 +16,24 @@ export default tseslint.config(
       'playwright-report',
       'test-results',
       '.lighthouseci',
-      // Dynamic workflows run inside Claude Code's own module wrapper, where a
-      // top-level `return` and the injected `agent` / `pipeline` globals are legal.
-      // ESLint parses them as plain ESM and rejects both. The runner owns this file's
-      // semantics, not the linter.
-      '.claude/workflows/**',
+      'public/mockServiceWorker.js',
+      // A software-factory run holds a full second copy of this repository at
+      // `.factory/worktrees/<TICKET>/`, so every ignore above is defeated one level
+      // down and ESLint reports the other checkout's findings as this one's. The same
+      // reason vite.config.ts excludes it from collection (47ca3b5). A run's own gates
+      // execute inside that worktree, where this path is again `.factory/`.
+      '.factory/**',
+      // Layer A is generated from the `harness` repo and verified by sha. Linting it
+      // here would report on a file nobody can fix from this repo, and any fix applied
+      // anyway would break the freshness check on the next sync. `.prettierignore`
+      // excludes it for the same reason; this was missed there because layer A was
+      // prose until the workflow moved into it.
+      //
+      // It also contains exactly the file below. Dynamic workflows run inside Claude
+      // Code's own module wrapper, where a top-level `return` and the injected `agent`
+      // and `pipeline` globals are legal; ESLint parses them as plain ESM and rejects
+      // both. The runner owns that file's semantics, not the linter.
+      '.claude/vendor/**',
     ],
   },
 
