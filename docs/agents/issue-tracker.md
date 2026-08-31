@@ -28,5 +28,6 @@ silently loses the axis. When there is no ticket, it falls back to `.claude/plan
   touches. Those override the skill's generic smell baseline.
 - Definition of Done lives in `CLAUDE.md`; the `verify` skill runs those gates and prints
   evidence.
-- Nine axes instead of two: `.claude/workflows/full-review.js`, run with `/workflows`. That
-  is real spend — reach for it when the diff warrants it, not by default.
+
+Nine axes instead of two: the `harness` plugin provides `full-review.js`. Run it with
+`/workflows`. This is real spend. Use it when the diff warrants it.
