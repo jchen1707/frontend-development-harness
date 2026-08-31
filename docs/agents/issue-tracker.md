@@ -38,5 +38,15 @@ silently loses the axis. When there is no ticket, it falls back to `.agents/plan
   touches. Those override the skill's generic smell baseline.
 - Definition of Done lives in `AGENTS.md`; the `verify` skill runs those gates and prints
   evidence.
-- Nine axes instead of two: `.claude/workflows/full-review.js`, run with `/workflows`. That
-  is real spend — reach for it when the diff warrants it, not by default.
+
+<!-- harness:agnostic -->
+
+Nine axes instead of two: `.agents/vendor/harness/workflows/full-review.js`. Run it through
+the portable `/full-review` skill. This is real spend. Use it when the diff warrants it.
+
+<!-- /harness:agnostic -->
+
+<!-- harness:claude
+Nine axes instead of two: the `harness` plugin provides `full-review.js`. Run it with
+`/workflows`. This is real spend. Use it when the diff warrants it.
+/harness:claude -->
