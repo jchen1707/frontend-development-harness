@@ -14,6 +14,10 @@ checkpoint, the deviations rule. It is vendored from
 checkpoint, the deviations rule. Read them first.
 /harness:claude -->
 
+Planning is optional when an approved spec and ticket settle the slice. Apply the shared
+ticket-readiness contract before implementation. The design decisions below may live in
+the approved spec, ticket, or an optional plan.
+
 This file records only what is true in **this** repo.
 
 ## What a design has to state explicitly
