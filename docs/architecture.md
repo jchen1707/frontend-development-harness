@@ -10,13 +10,14 @@ means editing this file and `AGENTS.md` first.
 
 **The unit of organization is the feature, not the layer.** Each feature owns its slice top-to-bottom under `src/features/<name>/` — its UI, its services (hooks), its repositories + schemas, and any feature-local types. The one-directional dependency rule (§1) holds _within_ the slice. The payoff: changes stay vertical (a typical edit touches one folder from route down to data access, not four global layer directories), and deleting a feature is deleting a folder, not archaeology across the tree.
 
-Pick the **structural style of the feature** deliberately during planning, and document the choice:
+Use the approved spec's structural style for the feature.
+Resolve missing technical choices in an execution brief or optional interactive plan:
 
 - **Default: layered slice** — inside the feature, UI/routes → services (hooks) → repositories → core. Good for most features.
 - **Flux / unidirectional** — for complex shared client state, a store (reducer/`useReducer` or a state library) with one-way data flow.
 - **Event-driven** — for realtime (WebSocket/SSE) features, an emitter/subscription boundary in the repository layer feeding services.
 
-Then choose the **React / GoF design pattern(s)** for the feature and justify them in the plan:
+Record the feature's React or GoF patterns in the approved spec, execution brief, or optional plan:
 
 - **Custom hooks** — the primary unit of logic reuse (default for sharing behavior).
 - **Container / presentational** — separate data-fetching from rendering when a view is reused or heavily tested.
@@ -27,7 +28,8 @@ Then choose the **React / GoF design pattern(s)** for the feature and justify th
 - **Factory / Strategy** — for selecting repository implementations at composition time.
 - **Adapter** — to wrap third-party API clients behind our repository interfaces.
 
-The agent must state the chosen pattern and _why_ during planning.
+Record the chosen pattern and its rationale before implementation.
+Complete approved tickets proceed after readiness checks. A separate per-ticket plan is optional.
 
 ### Recorded choices per feature
 
@@ -189,6 +191,12 @@ Baseline: route-level code-splitting (`React.lazy` + `Suspense`), measured memoi
 ---
 
 ## §14 Dependency policy
+
+`scaffolds/components.json` declares selections for newly generated projects.
+The `minimal` preset contains TypeScript tooling. The `react-vite` preset adds the browser application.
+REST, GraphQL, and server provider SDKs are explicit components.
+Server provider components cannot be combined with the browser preset.
+Generated guidance and manifests govern new projects. Existing projects retain their dependencies until an explicit migration.
 
 The approved stack is fixed in `package.json`. Adding a new framework/library requires updating AGENTS.md + this file **first**, with a short rationale. Prefer editing `package.json` then `pnpm install` over ad-hoc `pnpm add`. Keep `pnpm-lock.yaml` committed; CI installs with `--frozen-lockfile`.
 

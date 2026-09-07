@@ -38,7 +38,7 @@ The stages every path runs through:
 /harness:claude -->
 
 ```
-discover → clarify → specify → split → implement → verify → review → deliver
+discover → clarify → specify → split → readiness → implement → verify → review → deliver
 ```
 
 <!-- harness:agnostic -->
@@ -61,12 +61,13 @@ from the listing means user-invocable, not missing — do not report them as non
 Small work uses `/plan` → (new terminal) → `/implement-from-plan` instead.
 /harness:claude -->
 
-Keep discovery through splitting in one context. Record the result in
-`.agents/plans/plan.md` and `.agents/plans/test-plan.md`. Use a fresh context for each ticket
-when the harness supports it. A single agent may execute the same stages sequentially when it
-does not.
+Keep discovery through splitting in one context. Record approved product and testing decisions
+in the spec and vertical tickets. Check ticket readiness before implementation: acceptance
+criteria, testing seams, dependencies, and current authority. Complete tickets proceed directly.
+Return missing product decisions to the human; record technical details in a short execution brief.
+Use a fresh context for each ticket when supported. Keep `/plan` optional for interactive design.
 
-Small work can start at clarify or implement. Ticket-shaped work starts at discovery. Every
+Small work can start at clarify or implement. Approved tickets start at readiness. Every
 path ends with the repository gates and independent Standards and Spec review. Committing to
 a feature branch and opening a PR needs no permission; committing to `main` does.
 
@@ -277,8 +278,8 @@ The four rules to know without reading anything:
 - **Zod at every boundary.** Parse, never `as`. Explicit types on every export, no `any`.
 - **Unit tests stay offline.** MSW intercepts everything; the browser suite is Playwright.
 
-Pick the architectural style and design pattern per feature during planning, not while coding,
-and record the choice — `docs/architecture.md` §0.
+Use approved architecture and design decisions before implementation.
+Record missing technical choices in an execution brief or optional plan — `docs/architecture.md` §0.
 
 ## Reference documentation — read before you write
 
@@ -324,6 +325,11 @@ This applies to new writing. Existing documents are rewritten only when they are
 another reason.
 
 ## Stack
+
+New projects select `minimal` or `react-vite` from `scaffolds/components.json`.
+REST, GraphQL, and server provider SDKs are optional components.
+See `scaffolds/README.md` for composition and validation commands.
+These selections apply to generated projects. This repository retains its approved application stack.
 
 Fixed in `package.json` — read it there. What the file doesn't explain:
 

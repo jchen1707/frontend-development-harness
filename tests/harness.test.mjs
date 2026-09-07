@@ -33,6 +33,39 @@ const settings = JSON.parse(readFileSync(join(repositoryRoot, '.claude', 'settin
 const codex = JSON.parse(readFileSync(join(repositoryRoot, '.codex', 'hooks.json'), 'utf8'));
 const hooksDirectory = join(repositoryRoot, '.agents', 'vendor', 'harness', 'hooks');
 
+describe('composable project review inputs', () => {
+  const root = join(repositoryRoot, 'scaffolds');
+  const catalog = JSON.parse(readFileSync(join(root, 'components.json'), 'utf8'));
+  const shared = dirname(hooksDirectory);
+  const axes = JSON.parse(readFileSync(join(shared, 'workflows', 'review-axes.json'), 'utf8'));
+
+  it.each(['minimal', 'react-vite'])('supplies every shared review axis for %s', (preset) => {
+    const pending = [...catalog.presets[preset]];
+    const selected = new Set();
+    const templates = [];
+    while (pending.length) {
+      const name = pending.pop();
+      if (selected.has(name)) continue;
+      selected.add(name);
+      const component = catalog.components[name];
+      pending.push(...(component.requires ?? []));
+      if (component.template) templates.push(join(root, component.template));
+    }
+    expect(axes.length).toBeGreaterThan(0);
+    for (const axis of axes) {
+      const filename = `${axis.agent}.md`;
+      expect(existsSync(join(shared, 'agents', filename)), filename).toBe(true);
+      const checklists = templates.map((template) =>
+        join(template, catalog.config.review.checklistDir, filename),
+      );
+      expect(
+        checklists.some((path) => existsSync(path) && readFileSync(path, 'utf8').trim()),
+        filename,
+      ).toBe(true);
+    }
+  });
+});
+
 /**
  * Run layer A's own suite as part of this repo's Definition of Done.
  *
