@@ -1,0 +1,232 @@
+{
+  "schemaVersion": 1,
+  "manifest": {
+    "path": "package.json",
+    "format": "json",
+    "body": {
+      "name": "__PROJECT__",
+      "version": "0.1.0",
+      "private": true,
+      "type": "module",
+      "packageManager": "pnpm@10.15.1",
+      "scripts": {
+        "lint": "eslint src",
+        "format:check": "prettier --check src",
+        "typecheck": "tsc --noEmit",
+        "test": "vitest run",
+        "build": "tsc"
+      },
+      "dependencies": {},
+      "devDependencies": {
+        "typescript": "^5.7.3",
+        "@types/node": "^22.10.0",
+        "vitest": "^3.0.5",
+        "eslint": "^9.20.0",
+        "@eslint/js": "^9.20.0",
+        "typescript-eslint": "^8.24.0",
+        "prettier": "^3.5.0"
+      }
+    }
+  },
+  "config": {
+    "install": ["pnpm", "install"],
+    "gates": [
+      {
+        "name": "lint",
+        "kind": "lint",
+        "run": ["pnpm", "lint"]
+      },
+      {
+        "name": "format",
+        "kind": "format",
+        "run": ["pnpm", "format:check"]
+      },
+      {
+        "name": "types",
+        "kind": "types",
+        "run": ["pnpm", "typecheck"]
+      },
+      {
+        "name": "test",
+        "kind": "test",
+        "run": ["pnpm", "test"]
+      },
+      {
+        "name": "build",
+        "kind": "build",
+        "run": ["pnpm", "build"]
+      }
+    ],
+    "tests": ["src/**/*.test.ts"],
+    "hooks": {
+      "gatedPaths": ["src"],
+      "gatedFiles": [
+        "package.json",
+        "tsconfig.json",
+        "harness.config.json",
+        ".claude/settings.json",
+        "eslint.config.mjs",
+        "index.html"
+      ],
+      "gatedExtensions": [".ts", ".tsx", ".json"],
+      "protected": [
+        {
+          "glob": "pnpm-lock.yaml",
+          "why": "Regenerate with pnpm install; do not edit the lockfile directly."
+        },
+        {
+          "glob": "**/vendor/**",
+          "why": "Layer A is generated and pinned. Change its source and re-sync."
+        },
+        {
+          "glob": "**/migrations/**",
+          "why": "A human approves and applies schema migrations."
+        },
+        {
+          "glob": "**/generated/**",
+          "why": "Change the generator and regenerate this output."
+        },
+        {
+          "glob": "dist/**",
+          "why": "Build output is generated."
+        },
+        {
+          "glob": ".factory/**",
+          "why": "The factory owns its run scaffolding."
+        }
+      ]
+    },
+    "delivery": {
+      "default": "core",
+      "requirements": {
+        "lint": {
+          "kind": "engineering",
+          "gate": "lint",
+          "description": "Pass the declared lint gate.",
+          "deferrableIn": ["prototype"]
+        },
+        "format": {
+          "kind": "engineering",
+          "gate": "format",
+          "description": "Pass the declared format gate.",
+          "deferrableIn": ["prototype"]
+        },
+        "types": {
+          "kind": "engineering",
+          "gate": "types",
+          "description": "Pass the declared types gate.",
+          "deferrableIn": ["prototype"]
+        },
+        "test": {
+          "kind": "engineering",
+          "gate": "test",
+          "description": "Pass the declared test gate.",
+          "deferrableIn": ["prototype"]
+        },
+        "build": {
+          "kind": "engineering",
+          "gate": "build",
+          "description": "Pass the declared build gate.",
+          "deferrableIn": ["prototype"]
+        }
+      },
+      "profiles": {
+        "prototype": {
+          "required": ["lint", "format", "types", "test", "build"],
+          "deferrals": []
+        },
+        "core": {
+          "required": ["lint", "format", "types", "test", "build"],
+          "deferrals": []
+        },
+        "hardening": {
+          "required": ["lint", "format", "types", "test", "build"],
+          "deferrals": []
+        }
+      }
+    },
+    "review": {
+      "checklistDir": "docs/agents/subagents",
+      "styleEnforcedBy": "ESLint, Prettier or tsc"
+    }
+  },
+  "presets": {
+    "minimal": ["typescript"],
+    "react-vite": ["react-vite"]
+  },
+  "components": {
+    "typescript": {
+      "template": "templates/typescript",
+      "guidance": "Keep domain functions independent of browsers and frameworks."
+    },
+    "react-vite": {
+      "requires": ["typescript"],
+      "template": "templates/react-vite",
+      "manifest": {
+        "scripts": {
+          "build": "tsc --noEmit && vite build",
+          "dev": "vite"
+        },
+        "dependencies": {
+          "react": "^19.0.0",
+          "react-dom": "^19.0.0"
+        },
+        "devDependencies": {
+          "@types/react": "^19.0.0",
+          "@types/react-dom": "^19.0.0",
+          "vite": "^6.1.0",
+          "@vitejs/plugin-react": "^4.3.4"
+        }
+      },
+      "config": {
+        "dev": {
+          "run": ["pnpm", "dev"],
+          "url": "http://127.0.0.1:5173",
+          "readyCheck": "The greeting renders"
+        }
+      },
+      "guidance": "Use semantic HTML. Keep credentials out of browser bundles.",
+      "overrides": ["tsconfig.json"]
+    },
+    "rest": {
+      "requires": ["react-vite"],
+      "manifest": {
+        "dependencies": {
+          "@tanstack/react-query": "^5.66.0",
+          "zod": "^3.24.1"
+        }
+      },
+      "guidance": "Use TanStack Query for server state. Validate response boundaries."
+    },
+    "graphql": {
+      "requires": ["react-vite"],
+      "manifest": {
+        "dependencies": {
+          "@apollo/client": "^3.13.1",
+          "graphql": "^16.10.0"
+        }
+      },
+      "guidance": "Use Apollo for GraphQL server state. Keep transport logic outside components."
+    },
+    "anthropic-server": {
+      "requires": ["typescript"],
+      "conflicts": ["react-vite"],
+      "manifest": {
+        "dependencies": {
+          "@anthropic-ai/sdk": "^0.78.0"
+        }
+      },
+      "guidance": "Use this SDK only in a server project. Read credentials from server configuration."
+    },
+    "openai-server": {
+      "requires": ["typescript"],
+      "conflicts": ["react-vite"],
+      "manifest": {
+        "dependencies": {
+          "openai": "^6.0.0"
+        }
+      },
+      "guidance": "Use this SDK only in a server project. Test provider calls with offline fakes."
+    }
+  }
+}

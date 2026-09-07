@@ -12,6 +12,11 @@ Never stop only because a named plugin or slash command is missing.
 
 ## Stages
 
+Approved tickets start at readiness. Discovery through splitting applies when the approved contract is missing.
+At readiness, check acceptance criteria, testing seams, dependencies, and current authority.
+Return missing product decisions to the human. Record missing technical details in an execution brief.
+Use the shared ticket-readiness, diagnose-and-hand-off, and refresh-execution-authority contracts from layer A.
+
 1. **Discover.** Read `CLAUDE.md`, relevant nested `CLAUDE.md`, architecture records, code,
    and the originating issue. State unknowns and constraints.
 2. **Clarify.** Resolve decisions that materially change scope. Make safe reversible
@@ -19,8 +24,8 @@ Never stop only because a named plugin or slash command is missing.
 3. **Specify.** Write observable outcomes, non-goals, constraints, and acceptance criteria.
 4. **Split.** Create independently testable tickets. Record dependencies and one verification
    command per ticket.
-5. **Implement.** Work one ticket at a time. Preserve architecture boundaries. Add a test
-   that fails without the new behavior.
+5. **Implement.** Work one ticket at a time. Preserve architecture boundaries.
+   Prove one failing test before implementing each behavior. Keep each TDD slice vertical.
 6. **Verify.** Follow `.claude/skills/verify/SKILL.md`. Add E2E verification for changed UI
    behavior.
 7. **Review.** Compare the diff against the specification and repository standards. Use
@@ -30,12 +35,13 @@ Never stop only because a named plugin or slash command is missing.
 
 ## State
 
-Write durable workflow state below `.claude/plans/`. Use `plan.md`, `test-plan.md`, and
-`loop-<goal>.md`. Each file states its status, source request or issue, assumptions, current
-stage, completed work, remaining work, and exact verification commands.
+Approved specs and tickets are the execution contract. Check their readiness before implementing.
+Use optional plan files for interactive design, or a short execution brief for missing technical details.
+Record handoffs below `.claude/plans/` with the contract revision, branch, dirty work, verified behavior,
+remaining failure, attempted fixes, and evidence paths. Keep full logs outside the prompt.
 
 Do not depend on chat history for a handoff. A fresh agent must be able to continue from the
-plan, the ticket, the repository instructions, and the diff.
+approved contract, any execution brief, the repository instructions, and the diff.
 
 ## Capability fallbacks
 

@@ -4,6 +4,10 @@
 `/implement-from-plan` — the two-terminal protocol, the branch setup, the sign-off
 checkpoint, the deviations rule. Read them first.
 
+Planning is optional when an approved spec and ticket settle the slice. Apply the shared
+ticket-readiness contract before implementation. The design decisions below may live in
+the approved spec, ticket, or an optional plan.
+
 This file records only what is true in **this** repo.
 
 ## What a design has to state explicitly

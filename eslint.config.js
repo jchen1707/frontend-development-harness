@@ -23,6 +23,8 @@ export default tseslint.config(
       // reason vite.config.ts excludes it from collection (47ca3b5). A run's own gates
       // execute inside that worktree, where this path is again `.factory/`.
       '.factory/**',
+      // Components are partial projects. Validate their composed output with its declared gates.
+      'scaffolds/templates/**',
       // Layer A is generated from the `harness` repo and verified by sha. Linting it
       // here would report on a file nobody can fix from this repo, and any fix applied
       // anyway would break the freshness check on the next sync. `.prettierignore`
