@@ -482,11 +482,27 @@ describe('hook wiring', () => {
     }
   });
 
+  it.each(configs)('%s: recalls learnings and detaches session capture', (_name, source) => {
+    expect(JSON.stringify(source.hooks.SessionStart)).toContain(
+      'vendor/harness/hooks/learning_recall.mjs',
+    );
+    expect(JSON.stringify(source.hooks.SessionEnd)).toContain('codex_session_learnings.mjs');
+    expect(source.hooks.SessionEnd[0].hooks[0].timeout).toBe(3);
+    expect(JSON.stringify(source.hooks.SessionEnd).includes('--claude')).toBe(source === settings);
+  });
+
   it.each(configs)('%s: still wires every lifecycle event', (_name, source) => {
     // The assertions above pass vacuously if a guard is deleted: `some([])` is false, so the
     // read-only check holds and only the coverage check is left to fail. Pin each event
     // separately so removing one reports as removal.
-    for (const event of ['PreToolUse', 'PostToolUse', 'Stop', 'SessionEnd']) {
+    for (const event of [
+      'PreToolUse',
+      'PostToolUse',
+      'Stop',
+      'SessionEnd',
+      'SessionStart',
+      'UserPromptSubmit',
+    ]) {
       expect(source.hooks[event]?.length, `no ${event} hook is configured at all`).toBeTruthy();
     }
   });
