@@ -93,8 +93,8 @@ describe('the shared hooks', () => {
       windowsHide: true,
     });
     const output = `${result.stdout ?? ''}${result.stderr ?? ''}`;
-    expect(result.status, output.trim().split('\n').slice(-30).join('\n')).toBe(0);
-  });
+    expect(result.status, output.trim()).toBe(0);
+  }, 305_000); // Allow the subprocess ceiling plus startup and failure reporting.
 });
 
 // `main` is generated from this branch by `.agents/transform/`. The manifest names paths,
