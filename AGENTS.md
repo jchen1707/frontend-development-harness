@@ -119,7 +119,7 @@ path they act on is declared under `hooks` in `harness.config.json`.
 | `protect_paths.mjs` (PreToolUse)     | Blocks edits to `pnpm-lock.yaml`, `dist/`, generated output, `.husky/_/` and the vendored tree. Blocks **reading** `.env` / `.env.*`, permitting `.env.example`. Blocks the shell commands that reach a secret without naming a file |
 | `format_edited.mjs` (PostToolUse)    | Runs `prettier --write` on each edited file, plus `eslint --fix` on `.ts`/`.tsx`                                                                                                                                                     |
 | `verify.mjs` (Stop)                  | Blocks the turn while the gates fail — **only** when the turn changed gated source, or changed a file that defines the gates                                                                                                         |
-| `session_learnings.mjs` (SessionEnd) | Distils the session's mistakes-and-fixes into a note in the second brain, and rebuilds both vault indexes. Off unless `OBSIDIAN_VAULT_DIRECTORY` is set                                                                              |
+| `session_learnings.mjs` (SessionEnd) | Distils the session's mistakes-and-fixes into a note in the second brain, and rebuilds both vault indexes. Requires a configured vault process environment                                                                           |
 
 The Stop gate is what makes a session walk-away-able. `HARNESS_SKIP_VERIFY=1` disables it,
 and the Claude-specific `CLAUDE_SKIP_VERIFY` is kept as a legacy alias. The harness overrides
@@ -492,10 +492,10 @@ A layer above memory, in the user's own notes rather than the agent's:
 
 - **Write** — `session_learnings.mjs` (SessionEnd) distils the session's mistakes and their
   fixes into a dated note under `Project Learnings`. It writes **nothing** when a session
-  taught nothing. Every run appends one outcome line to `_hook.log` beside the notes, so a
-  missing note is diagnosable: no log line means SessionEnd never fired (a closed terminal
-  window skips it); a `failed:` line names the reason. When a session's notes matter, end it
-  cleanly rather than closing the window.
+  taught nothing. Capture records outcomes in `_hook.log` beside the notes when writable, so a
+  missing note is diagnosable. A missing log line can mean absent configuration or failed
+  logging, not only a skipped hook. Queued or started without a terminal outcome does not
+  prove capture completed. A `failed:` line names the reason; interruption can skip SessionEnd.
 - **Index** — the same hook rebuilds both indexes: `_VAULT_INDEX.md` at the vault root on
   every session end, and `Project Learnings/_INDEX.md` when that session wrote a note. This
   repo used to write notes and depend on a session ending in `python-harness` to index them.
@@ -504,7 +504,8 @@ A layer above memory, in the user's own notes rather than the agent's:
   is the point.
 - **Read** — `/search-second-brain <topic>`. Read-only by design.
 
-Set `OBSIDIAN_VAULT_DIRECTORY` in **user** settings. Do not set it in this repo's committed
+Set `OBSIDIAN_VAULT_DIRECTORY` in the runtime **process environment**
+(`OBSIDIAN_VAULT_DIR` is accepted only when the canonical variable is absent). Do not set it in this repo's committed
 `.claude/settings.json`. The hook and `/search-second-brain` append `Project Learnings` when
 they need the learnings directory.
 
